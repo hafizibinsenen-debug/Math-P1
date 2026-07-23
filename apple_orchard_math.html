@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>Apple Orchard Math</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky: #EAF6FF;
+    --sky-deep: #CDEBFF;
+    --leaf: #4CAF6D;
+    --leaf-dark: #2F8B4E;
+    --apple: #FF6B5E;
+    --apple-dark: #E14E42;
+    --sun: #FFC93C;
+    --plum: #6B4C9A;
+    --ink: #2E3B4E;
+    --paper: #FFFFFF;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 100%);
+    font-family: 'Nunito', sans-serif;
+    color: var(--ink);
+    overflow-x:hidden;
+  }
+  .stage{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 24px 16px;
+    position:relative;
+  }
+  .orchard-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+  }
+  .card{
+    position:relative; z-index:1;
+    background: var(--paper);
+    border-radius: 28px;
+    box-shadow: 0 12px 0 rgba(47,139,78,0.15), 0 20px 40px rgba(46,59,78,0.12);
+    padding: 36px 32px 30px;
+    max-width: 460px;
+    width:100%;
+    text-align:center;
+    border: 4px solid var(--leaf);
+  }
+  h1{
+    font-family:'Baloo 2', cursive;
+    font-size: 2rem;
+    color: var(--leaf-dark);
+    margin: 0 0 6px;
+    line-height:1.1;
+  }
+  .subtitle{
+    font-weight:700;
+    color: var(--ink);
+    opacity:0.7;
+    margin: 0 0 22px;
+    font-size: 1rem;
+  }
+  input[type="text"]{
+    width:100%;
+    font-family:'Nunito', sans-serif;
+    font-size: 1.15rem;
+    font-weight:700;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 3px solid var(--sky-deep);
+    outline:none;
+    text-align:center;
+    margin-bottom: 18px;
+    color: var(--ink);
+    transition: border-color .15s ease;
+  }
+  input[type="text"]:focus{ border-color: var(--leaf); }
+  button.primary{
+    font-family:'Baloo 2', cursive;
+    font-size: 1.25rem;
+    font-weight:700;
+    color:#fff;
+    background: var(--apple);
+    border:none;
+    border-radius: 18px;
+    padding: 14px 34px;
+    cursor:pointer;
+    box-shadow: 0 6px 0 var(--apple-dark);
+    transition: transform .08s ease;
+  }
+  button.primary:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--apple-dark); }
+  button.primary:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .progress-row{
+    display:flex; justify-content:center; gap:6px; margin-bottom: 18px;
+  }
+  .dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--sky-deep);
+  }
+  .dot.done{ background: var(--sun); }
+  .dot.active{ background: var(--leaf); transform:scale(1.3); }
+
+  .prompt{
+    font-family:'Baloo 2', cursive;
+    font-size: 1.4rem;
+    color: var(--ink);
+    margin: 4px 0 16px;
+  }
+  .apples-row{
+    display:flex; flex-wrap:wrap; justify-content:center; gap: 6px;
+    min-height: 64px;
+    align-items:center;
+    margin-bottom: 8px;
+  }
+  .apples-row.subtract .crossed{ opacity: 0.25; filter: grayscale(60%); }
+  .apple-emoji{
+    font-size: 2rem;
+    display:inline-block;
+    animation: pop .35s ease backwards;
+  }
+  @keyframes pop{
+    from{ transform: scale(0); }
+    to{ transform: scale(1); }
+  }
+  .equation{
+    font-family:'Baloo 2', cursive;
+    font-size: 2.4rem;
+    color: var(--plum);
+    margin: 6px 0 22px;
+  }
+  .choices{
+    display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    margin-bottom: 6px;
+  }
+  .choice-btn{
+    font-family:'Baloo 2', cursive;
+    font-size: 1.6rem;
+    font-weight:700;
+    color: var(--ink);
+    background: var(--sky);
+    border: 3px solid var(--sky-deep);
+    border-radius: 18px;
+    width: 84px;
+    height: 72px;
+    cursor:pointer;
+    transition: transform .08s ease, background .15s ease, border-color .15s ease;
+  }
+  .choice-btn:hover:not(:disabled){ transform: translateY(-3px); border-color: var(--leaf); }
+  .choice-btn:active:not(:disabled){ transform: translateY(1px); }
+  .choice-btn.correct{ background: #D7F3DE; border-color: var(--leaf); color: var(--leaf-dark); }
+  .choice-btn.wrong{ background: #FFE0DD; border-color: var(--apple); color: var(--apple-dark); }
+  .choice-btn:disabled{ cursor:default; }
+
+  .feedback{
+    min-height: 30px;
+    font-family:'Baloo 2', cursive;
+    font-size: 1.15rem;
+    margin: 10px 0 4px;
+  }
+  .feedback.good{ color: var(--leaf-dark); }
+  .feedback.bad{ color: var(--apple-dark); }
+
+  .score-big{
+    font-family:'Baloo 2', cursive;
+    font-size: 3.2rem;
+    color: var(--leaf-dark);
+    margin: 4px 0;
+  }
+  .score-basket{
+    font-size: 2.4rem;
+    margin: 10px 0 4px;
+    letter-spacing: 2px;
+  }
+  .status-msg{
+    font-size: 0.9rem;
+    opacity:0.7;
+    margin-top: 14px;
+    min-height: 18px;
+  }
+  .hidden{ display:none !important; }
+
+  @media (prefers-reduced-motion: reduce){
+    .apple-emoji, .choice-btn, button.primary{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="card">
+
+    <!-- SCREEN 1: Name entry -->
+    <div id="screen-start">
+      <h1>🍎 Apple Orchard Math</h1>
+      <p class="subtitle">Let's count and add some apples!</p>
+      <input type="text" id="student-name" placeholder="Type your name" autocomplete="off" />
+      <br/>
+      <button class="primary" id="start-btn" disabled>Let's Go!</button>
+    </div>
+
+    <!-- SCREEN 2: Quiz -->
+    <div id="screen-quiz" class="hidden">
+      <div class="progress-row" id="progress-row"></div>
+      <div class="prompt" id="question-prompt"></div>
+      <div class="apples-row" id="apples-row"></div>
+      <div class="equation" id="equation-text"></div>
+      <div class="choices" id="choices-row"></div>
+      <div class="feedback" id="feedback-text"></div>
+    </div>
+
+    <!-- SCREEN 3: Results -->
+    <div id="screen-results" class="hidden">
+      <h1>Great picking! 🧺</h1>
+      <div class="score-basket" id="score-basket"></div>
+      <div class="score-big" id="score-text"></div>
+      <p class="subtitle" id="score-message"></p>
+      <button class="primary" id="retry-btn">Play Again</button>
+      <div class="status-msg" id="submit-status"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // TEACHER SETUP: paste your Google Apps Script Web App URL below.
+  // See the accompanying instructions for how to create it.
+  // If left blank, scores just show on screen and nothing is sent anywhere.
+  // =========================================================================
+  const SHEET_ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbwAMkt_1RYxcfr667OmUVoJUTjowW24mNUh6UemSQcYIxLmprd4BuK9yIg0X5F8-5Cz/exec";
+
+  // ---- Question bank: grade-1 friendly addition & subtraction within 10 ----
+  const QUESTIONS = [
+    { a: 2, b: 3, op: '+' },
+    { a: 5, b: 2, op: '+' },
+    { a: 4, b: 1, op: '+' },
+    { a: 6, b: 2, op: '-' },
+    { a: 7, b: 3, op: '+' },
+    { a: 8, b: 5, op: '-' },
+  ];
+
+  let current = 0;
+  let score = 0;
+  let studentName = '';
+  let answered = false;
+
+  const startScreen = document.getElementById('screen-start');
+  const quizScreen = document.getElementById('screen-quiz');
+  const resultsScreen = document.getElementById('screen-results');
+  const nameInput = document.getElementById('student-name');
+  const startBtn = document.getElementById('start-btn');
+
+  nameInput.addEventListener('input', () => {
+    startBtn.disabled = nameInput.value.trim().length === 0;
+  });
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !startBtn.disabled) startBtn.click();
+  });
+
+  startBtn.addEventListener('click', () => {
+    studentName = nameInput.value.trim();
+    startScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+    renderProgress();
+    renderQuestion();
+  });
+
+  document.getElementById('retry-btn').addEventListener('click', () => {
+    current = 0; score = 0; answered = false;
+    resultsScreen.classList.add('hidden');
+    startScreen.classList.remove('hidden');
+    nameInput.value = '';
+    startBtn.disabled = true;
+  });
+
+  function renderProgress(){
+    const row = document.getElementById('progress-row');
+    row.innerHTML = '';
+    QUESTIONS.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i < current ? ' done' : i === current ? ' active' : '');
+      row.appendChild(dot);
+    });
+  }
+
+  function makeChoices(correctAnswer){
+    const options = new Set([correctAnswer]);
+    while (options.size < 3){
+      const delta = Math.floor(Math.random() * 5) - 2; // -2..+2
+      const candidate = correctAnswer + delta;
+      if (candidate >= 0 && candidate <= 12 && candidate !== correctAnswer){
+        options.add(candidate);
+      }
+    }
+    return Array.from(options).sort(() => Math.random() - 0.5);
+  }
+
+  function renderQuestion(){
+    answered = false;
+    const q = QUESTIONS[current];
+    const correctAnswer = q.op === '+' ? q.a + q.b : q.a - q.b;
+
+    document.getElementById('question-prompt').textContent =
+      q.op === '+' ? "How many apples in all?" : "How many apples are left?";
+
+    // Draw apples
+    const applesRow = document.getElementById('apples-row');
+    applesRow.innerHTML = '';
+    applesRow.className = 'apples-row' + (q.op === '-' ? ' subtract' : '');
+
+    if (q.op === '+'){
+      for (let i = 0; i < q.a; i++) applesRow.appendChild(makeApple(i));
+      const plusGap = document.createElement('span');
+      plusGap.style.width = '4px';
+      applesRow.appendChild(plusGap);
+      for (let i = 0; i < q.b; i++) applesRow.appendChild(makeApple(q.a + i));
+    } else {
+      for (let i = 0; i < q.a; i++){
+        const apple = makeApple(i);
+        if (i >= q.a - q.b) apple.classList.add('crossed');
+        applesRow.appendChild(apple);
+      }
+    }
+
+    document.getElementById('equation-text').textContent =
+      `${q.a} ${q.op} ${q.b} = ?`;
+
+    const choices = makeChoices(correctAnswer);
+    const choicesRow = document.getElementById('choices-row');
+    choicesRow.innerHTML = '';
+    choices.forEach(val => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = val;
+      btn.addEventListener('click', () => handleAnswer(btn, val, correctAnswer));
+      choicesRow.appendChild(btn);
+    });
+
+    document.getElementById('feedback-text').textContent = '';
+    document.getElementById('feedback-text').className = 'feedback';
+    renderProgress();
+  }
+
+  function makeApple(index){
+    const span = document.createElement('span');
+    span.className = 'apple-emoji';
+    span.style.animationDelay = (index * 0.05) + 's';
+    span.textContent = '🍎';
+    return span;
+  }
+
+  function handleAnswer(btn, chosen, correctAnswer){
+    if (answered) return;
+    answered = true;
+
+    const allBtns = document.querySelectorAll('.choice-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    const feedback = document.getElementById('feedback-text');
+    if (chosen === correctAnswer){
+      score++;
+      btn.classList.add('correct');
+      feedback.textContent = pick(["Yes! 🌟", "Super job!", "That's right!", "Nailed it!"]);
+      feedback.className = 'feedback good';
+    } else {
+      btn.classList.add('wrong');
+      allBtns.forEach(b => { if (Number(b.textContent) === correctAnswer) b.classList.add('correct'); });
+      feedback.textContent = `So close! It's ${correctAnswer}.`;
+      feedback.className = 'feedback bad';
+    }
+
+    setTimeout(() => {
+      current++;
+      if (current < QUESTIONS.length){
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }, 1100);
+  }
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function showResults(){
+    quizScreen.classList.add('hidden');
+    resultsScreen.classList.remove('hidden');
+    document.getElementById('score-text').textContent = `${score} / ${QUESTIONS.length}`;
+    document.getElementById('score-basket').textContent = '🍎'.repeat(score) + '⚪'.repeat(QUESTIONS.length - score);
+
+    let msg = "Keep practicing — you're growing!";
+    if (score === QUESTIONS.length) msg = "Perfect harvest! Amazing work!";
+    else if (score >= QUESTIONS.length - 1) msg = "So close to perfect. Wonderful job!";
+    else if (score >= QUESTIONS.length / 2) msg = "Nice work! A few more apples to pick.";
+    document.getElementById('score-message').textContent = msg;
+
+    submitScore();
+  }
+
+  function submitScore(){
+    const statusEl = document.getElementById('submit-status');
+    if (!SHEET_ENDPOINT_URL || SHEET_ENDPOINT_URL.indexOf('PASTE_YOUR') === 0){
+      statusEl.textContent = '';
+      return;
+    }
+    statusEl.textContent = 'Saving your score...';
+    const payload = {
+      name: studentName,
+      score: score,
+      total: QUESTIONS.length,
+      timestamp: new Date().toISOString()
+    };
+    fetch(SHEET_ENDPOINT_URL, {
+      method: 'POST',
+      mode: 'no-cors', // Apps Script web apps don't return CORS headers; we can't read the response, but the POST still lands.
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      statusEl.textContent = 'Score saved for your teacher ✓';
+    }).catch(() => {
+      statusEl.textContent = 'Could not save score (offline?)';
+    });
+  }
+</script>
+</body>
+</html>
